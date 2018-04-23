@@ -1,15 +1,13 @@
 # Placeholder Makefile
 
-all: pre-processing/initilize.c learned\ indexing/main.py
-	@echo "Compiling Pre-processor..."
-	@gcc pre-processing/initilize.c -o pre-processing/init.out
+all: learned\ indexing/main.py
 	@echo "Running..."
-	@python learned\ indexing/main.py
-	@echo "Completed, Cleaning"
-	@rm pre-processing/*.out # TODO: Bucket
+	@python3 learned\ indexing/main.py
+	@echo "Completed"
+	@echo "Cleaning..." #TODO
 	@echo "Done"
 
 clean:
 	@echo "Cleaning..."
-	@rm pre-processing/*.out # TODO: Bucket
+	@rm bucket/out.csv
 	@echo "Done"
