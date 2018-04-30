@@ -1,29 +1,41 @@
 import numpy as np
 import pandas
+from ortools.linear_solver import pywraplp
 
-num_data = int(input("How Many Data Points?\n"))
-batch_size = int(input("What is The Batch Size?\n"))
-num_data = num_data - (num_data%batch_size) # make num_data divisible by batch_size
-print("effectively {0} data points ".format(num_data))
-initVal = 0
-batch = np.zeros(batch_size,dtype= np.float_)
-i = 0
-cnt = 1
-while (i<num_data):
-    batch_count=0
-    print("Batch {0} of {1}".format(cnt, int(num_data/batch_size)))
-    while ( batch_count < batch_size):
-        beta = np.random.beta(1,num_data-i) # This is a float from 0 to 1
-        nextVal = (1-initVal)*beta+initVal
-        np.put(batch,[i%batch_size],[nextVal])
-        initVal = nextVal
-        i=i+1
-        batch_count=batch_count+1
-    cnt=cnt+1
-    pandas.DataFrame(batch).to_csv("bucket\\out.csv", mode='a', header=False, index=False)
-    #pandas.DataFrame(batch).to_csv("bucket/out.csv", mode='a', header=False, index=False)
+for i in range(1,100):
+    num_data = (2**i)
+    batch_size = 1024
+    batch = np.zeros(batch_size,dtype= np.float_)
+    with open('bucket\\outputLinfinity{}.csv'.format(i), 'w') :
+        pass
+    for j in range(4096):
+        initVal = 0
+        y = 0
+        solver = pywraplp.Solver('LinearReg',pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
+        t = solver.NumVar(-solver.infinity(), solver.infinity(), 't')
+        beta = solver.NumVar(-solver.infinity(), solver.infinity(), 'beta')
 
+        while (y<num_data):
+            betaF = np.random.beta(1,num_data-y) # This is a float from 0 to 1
+            x = (1-initVal)*betaF+initVal
+            constraint_pos = solver.Constraint(y,solver.infinity())
+            constraint_pos.SetCoefficient(beta,x)
+            constraint_pos.SetCoefficient(t,1)
+            constraint_neg = solver.Constraint(-1*y,solver.infinity())
+            constraint_neg.SetCoefficient(beta,-1*x)
+            constraint_neg.SetCoefficient(t,1)
+            y+=1
+            initVal = x
+        objective = solver.Objective()
+        objective.SetCoefficient(t,1)
+        objective.SetMinimization()
 
+        solver.Solve()
+        np.put(batch,[j%batch_size],[t.solution_value()])    
+        if (j%batch_size==batch_size-1):
+            pandas.DataFrame(batch).to_csv("bucket\\outputLinfinity{}.csv".format(i), mode='a', header=False, index=False)
+        
+            
 
 """
 #https://rosettacode.org/wiki/External_sort
